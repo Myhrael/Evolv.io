@@ -1,22 +1,22 @@
 class MapSettings extends Settings{
   MapSettings(){
-    this.addInt("Map width", 10, 10, 100);
-    this.addInt("Map height", 10, 10, 100);
+    this.addInt("Map width", 25, new Vector2<Integer>(25, 100), Step.arythmeticInt(1));
+    this.addInt("Map height", 25, new Vector2<Integer>(25, 100), Step.arythmeticInt(1));
     
-    this.addFloat("Noise offset (x)", 0f, 0f, 1000f);
-    this.addFloat("Noise offset (y)", 0f, 0f, 1000f);
-    this.addFloat("Noise scale", 4f, 1f, 10f);
+    this.addFloat("Noise offset (x)", 0f, new Vector2<Float>(0f, 100f), Step.arythmeticFloat(0.2));
+    this.addFloat("Noise offset (y)", 0f, new Vector2<Float>(0f, 100f), Step.arythmeticFloat(0.2));
+    this.addFloat("Noise scale", 0.1, new Vector2<Float>(0f, 2f), Step.arythmeticFloat(0.05));
     
     this.addInt("Over-sampling", 0);
     
-    this.addFloat("See level", 0.3f, 0f, 1f);
-    this.addFloat("Mountains level", 0.8f, 0f, 1f);
+    this.addFloat("See level", 0.3f, new Vector2<Float>(0f, 1f), Step.arythmeticFloat(0.05));
+    this.addFloat("Mountains level", 0.8f, new Vector2<Float>(0f, 1f), Step.arythmeticFloat(0.05));
     
     this.addBool("Auto update", true);
   }
   
-  private int noiseWidth(){ return int(getInt("Map width").get() * pow(4, getInt("Over-sampling").get())); }
-  private int noiseHeight(){ return int(getInt("Map height").get() * pow(4, getInt("Over-sampling").get())); }
+  private int noiseWidth(){ return int(getInt("Map width") * pow(4, getInt("Over-sampling"))); }
+  private int noiseHeight(){ return int(getInt("Map height") * pow(4, getInt("Over-sampling"))); }
 }
 
 class MapGenerator{
@@ -27,13 +27,18 @@ class MapGenerator{
   MapGenerator(MapSettings settings){
     this.settings = settings;
     noise = new NoiseMap();
-    map = new Map(int(settings.getInt("Map width").get()), int(settings.getInt("Map height").get()));
+    map = new Map(int(settings.getInt("Map width")), int(settings.getInt("Map height")));
+  }
+  
+  public void update(){
+    generate();
   }
   
   public void generate(){
     float[][] baseMap = generateLandMass(noise.generate(settings.noiseWidth(), settings.noiseHeight(), 
-      settings.getFloat("Noise offset (x)").get(), settings.getFloat("Noise offset (y)").get(),
-      settings.getFloat("Noise scale").get()));
+      settings.getFloat("Noise offset (x)"), settings.getFloat("Noise offset (y)"),
+      settings.getFloat("Noise scale")));
+    map.set(baseMap, (int)(float)settings.getInt("Map width"), (int)(float)settings.getInt("Map height"));
   }
   
   private float[][] generateLandMass(float[][] noise){
@@ -42,7 +47,7 @@ class MapGenerator{
     for(int j=0; j<settings.noiseHeight(); ++j){
       for(int i=0; i<settings.noiseWidth(); ++i){
         float value = noise[j][i];
-        land[j][i] = value - settings.getFloat("See level").get();
+        land[j][i] = value; //- settings.getFloat("See level");
       }
     }
     

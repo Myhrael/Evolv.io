@@ -93,6 +93,7 @@ class EditorScene extends Scene{
       this.buildUI();
       initialized = true;
     }
+    mapGenerator.update();
     super.update();
   }
   

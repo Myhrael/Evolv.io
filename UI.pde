@@ -310,33 +310,24 @@ class CheckBox extends Control{
 class Slider extends Control{
   private static final int MARGIN = 10;
   
-  private float min, max;
-  private float step;
+  private Settings.ValueSetting vs;
   private color lineColor, cursorColor;
-  
-  public Slider(Rect rect, ObservableInt value, Vector2<Integer> range){
-    this(rect, value, range.e1, range.e2, 1);
-  }
-  public Slider(Rect rect, ObservableFloat value, Vector2<Float> range, float step){
-    this(rect, value, range.e1, range.e2, step);
-  }
-  private Slider(Rect rect, ObservableValue value, float min, float max, float step){
-    super(rect, value);
-    this.min = min; this.max = max;
-    this.step = step;
+  private boolean valueIsInteger;
+ 
+  private Slider(Rect rect, Settings.ValueSetting valueSetting){
+    super(rect, valueSetting.getObsValue());
+    vs = valueSetting;
     lineColor = color(20);
     cursorColor = color(80);
+    valueIsInteger = vs.getValue() instanceof Integer;
   }
   
   public void update(){
     super.update();
     if(onFocus() && mousePressed){
       Rect absolute = absoluteRect();
-      float v = map(mouseX, absolute.x+MARGIN, absolute.x+rect.w-MARGIN, min, max);
-      v -= v%step;
-      v = v<min ? min : v>max ? max : v;
-      value.set(v);
-      print((float)value.get()+"    ");
+      float v = map(mouseX, absolute.x+MARGIN, absolute.x+rect.w-MARGIN, getRange().e1, getRange().e2);
+      setValue(findNearestStep(v));
     }
   }
   
@@ -353,12 +344,48 @@ class Slider extends Control{
     rectMode(CENTER);
     fill(cursorColor);
     float cursorWidth = min(15, rect.w/4);
-    float v = (float) value.get();
-    float pos = map(v, min, max, rect.x+MARGIN+cursorWidth/2, rect.x+rect.w-MARGIN);
+    float v = getValue();
+    float pos = map(v, getRange().e1, getRange().e2, rect.x+MARGIN+cursorWidth/2, rect.x+rect.w-MARGIN);
     translate(pos, rect.y+rect.h/2);
     rect(0, 0, min(15, rect.w/4),rect.h/2);
     
     popMatrix();
+  }
+  
+  private float findNearestStep(float goal){
+    float previous = getValue();
+    float value = previous;
+    
+    if(value < goal){
+      while(value < goal){
+        previous = value;
+        if(valueIsInteger) value = (int)vs.getStep().step((int)value, true);
+        else value = (float)vs.getStep().step(value, true);
+      }
+    }else if(value > goal){
+      while(value > goal){
+        previous = value;
+        if(valueIsInteger) value = (int)vs.getStep().step((int)value, false);
+        else value = (float)vs.getStep().step(value, false);
+      }
+    }
+    
+    value = abs(goal-previous) < abs(goal-value) ? previous : value;
+    Vector2<Float> range = getRange();
+    return value < range.e1 ? range.e1 : value > range.e2 ? range.e2 : value;
+  }
+  
+  private float getValue(){
+    if(valueIsInteger) return (int)vs.getValue();
+    else return (float)vs.getValue();
+  }
+  private Vector2<Float> getRange(){
+    if(valueIsInteger) return new Vector2<Float>((float)(int)vs.getRange().e1, (float)(int)vs.getRange().e2);
+    else return vs.getRange();
+  }
+  private void setValue(float v){
+    if(valueIsInteger) vs.getObsValue().set((int) v);
+    else vs.getObsValue().set(v);
   }
 }
 
@@ -428,26 +455,24 @@ class SettingsEditor extends AbstractContainer{
     
     for(String k : settings.getIntKeys()){
       if(settings.hasRange(k)){
-        Vector2<Integer> range = settings.getIntRange(k);
         Canvas c = new Canvas(new Rect(0, el * elHeight, rect.w, elHeight));
         c.addChild(new Label(new Rect(0, 0, rect.w/3, elHeight), k));
-        c.addChild(new Slider(new Rect(rect.w/3, 0, 2*rect.w/3, elHeight), settings.getInt(k), range));
+        c.addChild(new Slider(new Rect(rect.w/3, 0, 2*rect.w/3, elHeight), settings.getIntSetting(k)));
         addChild(c);
         ++el;
       }
     }
     for(String k : settings.getFloatKeys()){
       if(settings.hasRange(k)){
-        Vector2<Float> range = settings.getFloatRange(k);
         Canvas c = new Canvas(new Rect(0, el * elHeight, rect.w, elHeight));
         c.addChild(new Label(new Rect(0, 0, rect.w/3, elHeight), k));
-        c.addChild(new Slider(new Rect(rect.w/3, 0, 2*rect.w/3, elHeight), settings.getFloat(k), range, 0.1));
+        c.addChild(new Slider(new Rect(rect.w/3, 0, 2*rect.w/3, elHeight), settings.getFloatSetting(k)));
         addChild(c);
         ++el;
       }
     }
     for(String k : settings.getBoolKeys()){
-      addChild(new CheckBox(new Rect(0, el*elHeight, rect.w, elHeight), settings.getBool(k), k));
+      addChild(new CheckBox(new Rect(0, el*elHeight, rect.w, elHeight), settings.getObsBool(k), k));
       ++el;
     }
   }

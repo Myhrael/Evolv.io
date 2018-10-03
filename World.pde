@@ -135,7 +135,7 @@ class Map{
         else tileWidth = tileSize;
         
         if(j>=0 && i>=0){
-          fill(map(tiles[j][i], 0, 1, 50, 255));
+          fill(map(tiles[j][i], 0, 1, 0, 255));
           //noStroke();
           stroke(0);
           rect(0, 0, tileWidth, tileHeight);
@@ -152,6 +152,12 @@ class Map{
     }
     
     popMatrix();
+  }
+  
+  public void set(float[][] newMap, int w, int h){
+    tiles = newMap;
+    this.w = w;
+    this.h = h;
   }
 }
 

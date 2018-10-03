@@ -40,13 +40,13 @@ interface ObservableValue<E>{
   public E get();
   public void set(E v);
 }
-class ObservableInt implements ObservableValue<Float>{
-  Float value;
+class ObservableInt implements ObservableValue<Integer>{
+  int value;
   
-  public ObservableInt(int i){ value = (float)i; }
+  public ObservableInt(int i){ value = i; }
   
-  public Float get(){ return value; }
-  public void set(Float i){ value = (float)ceil(i); }
+  public Integer get(){ return value; }
+  public void set(Integer i){ value = i; }
 }
 class ObservableFloat implements ObservableValue<Float>{
   Float value;
@@ -65,42 +65,96 @@ class ObservableBool implements ObservableValue<Boolean>{
   public void set(Boolean b){ value = b; }
 }
 
+abstract static class Step<E extends Number>{
+  public static Step<Integer> arythmeticInt(final int r){ return new Step(){
+    public Integer step(Number base, boolean ascend){
+      return ascend ? (int)base + r : (int)base - r;
+    }};
+  }
+  public static Step<Float> arythmeticFloat(final float r){ return new Step(){
+    public Float step(Number base, boolean ascend){
+      return ascend ? (float)base + r : (float)base - r;
+    }};
+  }
+  public abstract E step(E base, boolean ascend);
+}
+
 class Settings{
-  private HashMap<String, ObservableInt> intMap;
-  private HashMap<String, Vector2<Integer>> intRange;
-  private HashMap<String, ObservableFloat> floatMap;
-  private HashMap<String, Vector2<Float>> floatRange;
+  public abstract class ValueSetting<E extends Number>{
+    public abstract E getValue();
+    public abstract ObservableValue<E> getObsValue();
+    public abstract Vector2<E> getRange();
+    public abstract Step<E> getStep();
+  }
+  
+  private class IntSetting extends ValueSetting<Integer>{
+    protected ObservableInt obsValue;
+    protected Vector2<Integer> range;
+    protected Step<Integer> step;
+    
+    public IntSetting(int i, Vector2<Integer> range, Step<Integer> step){
+      this.obsValue = new ObservableInt(i);
+      this.range = range;
+      this.step = step;
+    }
+    
+    public Integer getValue(){ return obsValue.get(); }
+    public ObservableInt getObsValue(){ return obsValue; }
+    public Vector2<Integer> getRange(){ return range; }
+    public Step<Integer> getStep(){ return step; }
+  }
+  private class FloatSetting extends ValueSetting<Float>{
+    protected ObservableFloat obsValue;
+    protected Vector2<Float> range;
+    protected Step<Float> step;
+    
+    public FloatSetting(float f, Vector2<Float> range, Step<Float> step){
+      this.obsValue = new ObservableFloat(f);
+      this.range = range;
+      this.step = step;
+    }
+    
+    public Float getValue(){ return obsValue.get(); }
+    public ObservableFloat getObsValue(){ return obsValue; }
+    public Vector2<Float> getRange(){ return range; }
+    public Step<Float> getStep(){ return step; }
+  }
+  
+  private HashMap<String, IntSetting> intMap;
+  private HashMap<String, FloatSetting> floatMap;
   private HashMap<String, ObservableBool> boolMap;
   
   public Settings(){
-    intMap = new HashMap<String, ObservableInt>();
-    intRange = new HashMap<String, Vector2<Integer>>();
-    floatMap = new HashMap<String, ObservableFloat>();
-    floatRange = new HashMap<String, Vector2<Float>>();
+    intMap = new HashMap<String, IntSetting>();
+    floatMap = new HashMap<String, FloatSetting>();
     boolMap = new HashMap<String, ObservableBool>();
   }
   
-  public void addInt(String k, Integer i){ intMap.put(k, new ObservableInt(i)); }
-  public void addInt(String k, Integer i, Integer min, Integer max){
-    addInt(k, i);
-    intRange.put(k, new Vector2<Integer>(min, max));
+  public void addInt(String k, int i){ intMap.put(k, new IntSetting(i, null, null)); }
+  public void addInt(String k, int i, Vector2<Integer> range, Step<Integer> step){
+    intMap.put(k, new IntSetting(i, range, step));
   }
-  public void addFloat(String k, Float f){ floatMap.put(k, new ObservableFloat(f)); }
-  public void addFloat(String k, Float f, Float min, Float max){
-    addFloat(k, f);
-    floatRange.put(k, new Vector2<Float>(min, max));
+  public void addFloat(String k, float f){ floatMap.put(k, new FloatSetting(f, null, null)); }
+  public void addFloat(String k, float f, Vector2<Float> range, Step<Float> step){
+    floatMap.put(k, new FloatSetting(f, range, step));
   }
-  public void addBool(String k, Boolean b){ boolMap.put(k, new ObservableBool(b)); }
+  public void addBool(String k, boolean b){ boolMap.put(k, new ObservableBool(b)); }
   
-  public boolean hasRange(String k){ return intRange.containsKey(k) || floatRange.containsKey(k); }
-  public Vector2<Integer> getIntRange(String k){ return intRange.get(k); }
-  public Vector2<Float> getFloatRange(String k){ return floatRange.get(k); }
+  public boolean hasRange(String k){ 
+    return intMap.containsKey(k) ? intMap.get(k).range != null : false || 
+      floatMap.containsKey(k) ? floatMap.get(k).range != null : false; 
+  }
+  public Vector2<Integer> getIntRange(String k){ return intMap.get(k).range; }
+  public Vector2<Float> getFloatRange(String k){ return floatMap.get(k).range; }
   
-  public ObservableInt getInt(String k){ return intMap.get(k); }
+  public int getInt(String k){ return intMap.get(k) != null ? intMap.get(k).getValue() : 0; }
+  public IntSetting getIntSetting(String k){ return intMap.get(k); }
   public String[] getIntKeys(){ return keySetToArray(intMap.keySet()); }
-  public ObservableFloat getFloat(String k){ return floatMap.get(k); }
+  public float getFloat(String k){ return floatMap.get(k) != null ? floatMap.get(k).getValue() : 0f; }
+  public FloatSetting getFloatSetting(String k){ return floatMap.get(k); }
   public String[] getFloatKeys(){ return keySetToArray(floatMap.keySet()); }
-  public ObservableBool getBool(String k){ return boolMap.get(k); }
+  public boolean getBool(String k){ return boolMap.get(k) != null ? boolMap.get(k).get() : false; }
+  public ObservableBool getObsBool(String k){ return boolMap.get(k); }
   public String[] getBoolKeys(){ return keySetToArray(boolMap.keySet()); }
   
   public int count(){ return intMap.size() + floatMap.size() + boolMap.size(); }
