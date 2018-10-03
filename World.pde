@@ -115,32 +115,29 @@ class Map{
    * rotation: rotation
    * zoom: zoom of the map
    */
-  void draw(float w, float h, float xOff, float yOff, float zoom){
-    pushMatrix();
-    
+  void draw(float w, float h, float xOff, float yOff, float zoom){    
     int tileSize = int(min(w/this.w, h/this.h) * zoom);
     int tileWidth, tileHeight;
-    float nbrTileX = w/tileSize;
-    float nbrTileY = h/tileSize;
-    int usedWidth=0, usedHeight=0;
+    float usedWidth = 0, usedHeight = 0;
     
-    for(int j=(int)yOff; j<=h && j<nbrTileY+(int)yOff; ++j){
-      if(j == (int)yOff) tileHeight = int((1-(yOff-int(yOff))) * tileSize);
-      else if(usedHeight+tileSize > h) tileHeight = int(h-usedHeight);
+    pushMatrix();
+    
+    for(int j=floor(yOff); j<this.h && usedHeight<h; ++j){
+      if(j == floor(yOff) && yOff != int(yOff)) tileHeight = yOff>=0 ? int((1-yOff%1) * tileSize) : int((-yOff)%1 * tileSize);
+      else if(usedHeight+tileSize>h) tileHeight = int(h-usedHeight);
       else tileHeight = tileSize;
       
       pushMatrix();
-      usedWidth = 0;
       
-      for(int i=(int)xOff; i<=w && i<nbrTileX+(int)xOff; ++i){
-        if(i == (int)xOff) tileWidth = int((1-(xOff-int(xOff))) * tileSize);
-        else if(usedWidth+tileSize > w) tileWidth = int(w-usedWidth);
+      for(int i=floor(xOff); i<this.w && usedWidth<w; ++i){
+        if(i == floor(xOff) && xOff != int(xOff)) tileWidth = xOff>=0 ? int((1-xOff%1) * tileSize) : int((-xOff)%1 * tileSize);
+        else if(usedWidth+tileSize>w) tileWidth = int(w-usedWidth);
         else tileWidth = tileSize;
         
-        if(i>=0 && j>=0){
+        if(j>=0 && i>=0){
           fill(map(tiles[j][i], 0, 1, 50, 255));
           //noStroke();
-          stroke(1);
+          stroke(0);
           rect(0, 0, tileWidth, tileHeight);
         }
         
@@ -149,6 +146,7 @@ class Map{
       }
       
       popMatrix();
+      usedWidth = 0;
       usedHeight += tileHeight;
       translate(0, tileHeight);
     }

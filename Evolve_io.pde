@@ -4,17 +4,20 @@ float maxFPS = 30;
 float lastDrawTime = 0;
 Scene main, game, editor;
 Scene activeScene;
+AbstractUI onFocus;
+
+mbs mStatus = mbs.UP;
 
 void setup() {
   //noLoop();
-  //fullScreen();
-  size(800, 600);
+  fullScreen();
+  //size(800, 600);
   //colorMode(HSB,1.0);
   main = new MainScene();
   game = new GameScene();
   editor = new EditorScene();
   
-  activeScene = main;
+  activeScene = editor;
 }
 
 void draw(){
@@ -26,15 +29,30 @@ void draw(){
     activeScene.draw();
     lastDrawTime = millis();
   }
+  
+  updateMouseBtnStatus();
 }
 
-void mouseReleased(){
+void mousePressed(){
+  mStatus = mbs.PRESSED;
   activeScene.click();
+}
+void mouseReleased(){
+  mStatus = mbs.RELEASED;
+}
+
+void updateMouseBtnStatus(){
+  if(mStatus == mbs.PRESSED) mStatus = mbs.DOWN;
+  else if(mStatus == mbs.RELEASED) mStatus = mbs.UP;
 }
 
 class MainScene extends Scene{
   public void update(){
-    if(!initialized) this.buildUI();
+    if(!initialized) {
+      this.buildUI();
+      initialized = true;
+    }
+    super.update();
   }
   
   private void buildUI(){
@@ -71,7 +89,11 @@ class EditorScene extends Scene{
   }
   
   public void update(){
-    if(!initialized) this.buildUI();
+    if(!initialized) {
+      this.buildUI();
+      initialized = true;
+    }
+    super.update();
   }
   
   private void buildUI(){
@@ -79,10 +101,13 @@ class EditorScene extends Scene{
     title.setTextSize(40);
     
     MapContainer mapContainer = new MapContainer(new Rect(0, rect.h/5, 2*rect.w/3, 4*rect.h/5), mapGenerator.map);
-    mapContainer.setBackground(color(0));
+    mapContainer.setBackground(color(220));
+    mapContainer.setStroke(1);
     mapContainer.enableBackground();
     
     SettingsEditor settingsEditor = new SettingsEditor(new Rect(2*rect.w/3, rect.h/5, rect.w/3, 4*rect.h/5), mapSettings);
+    settingsEditor.setBackground(color(120));
+    settingsEditor.enableBackground();
     
     this.addChilds(title, mapContainer, settingsEditor);
   }
