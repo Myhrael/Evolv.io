@@ -310,13 +310,13 @@ class CheckBox extends Control{
 class Slider extends Control{
   private static final int MARGIN = 10;
   
-  private Settings.ValueSetting vs;
+  private Settings.NumberSetting vs;
   private color lineColor, cursorColor;
   private boolean valueIsInteger;
  
-  private Slider(Rect rect, Settings.ValueSetting valueSetting){
-    super(rect, valueSetting.getObsValue());
-    vs = valueSetting;
+  private Slider(Rect rect, Settings.NumberSetting numberSetting){
+    super(rect, numberSetting.getObsValue());
+    vs = numberSetting;
     lineColor = color(20);
     cursorColor = color(80);
     valueIsInteger = vs.getValue() instanceof Integer;

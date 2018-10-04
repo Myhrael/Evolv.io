@@ -1,13 +1,13 @@
 class MapSettings extends Settings{
   MapSettings(){
-    this.addInt("Map width", 25, new Vector2<Integer>(25, 100), Step.arythmeticInt(1));
-    this.addInt("Map height", 25, new Vector2<Integer>(25, 100), Step.arythmeticInt(1));
+    this.addInt("Map width", 100, new Vector2<Integer>(100, 500), Step.arythmeticInt(1));
+    this.addInt("Map height", 100, new Vector2<Integer>(100, 500), Step.arythmeticInt(1));
     
     this.addFloat("Noise offset (x)", 0f, new Vector2<Float>(0f, 100f), Step.arythmeticFloat(0.2));
     this.addFloat("Noise offset (y)", 0f, new Vector2<Float>(0f, 100f), Step.arythmeticFloat(0.2));
-    this.addFloat("Noise scale", 0.1, new Vector2<Float>(0f, 2f), Step.arythmeticFloat(0.05));
+    this.addFloat("Noise scale", 0.1, new Vector2<Float>(0f, 1f), Step.arythmeticFloat(0.01));
     
-    this.addInt("Over-sampling", 0);
+    this.addInt("Over-sampling", 0, new Vector2<Integer>(0, 8), Step.arythmeticInt(1));
     
     this.addFloat("See level", 0.3f, new Vector2<Float>(0f, 1f), Step.arythmeticFloat(0.05));
     this.addFloat("Mountains level", 0.8f, new Vector2<Float>(0f, 1f), Step.arythmeticFloat(0.05));
@@ -20,38 +20,73 @@ class MapSettings extends Settings{
 }
 
 class MapGenerator{
-  NoiseMap noise;
+  NoiseMap noiseMap;
   private MapSettings settings;
   public Map map;
   
   MapGenerator(MapSettings settings){
     this.settings = settings;
-    noise = new NoiseMap();
-    map = new Map(int(settings.getInt("Map width")), int(settings.getInt("Map height")));
+    noiseMap = new NoiseMap();
+    map = new Map(int(settings.getInt("Map width")), int(settings.getInt("Map height")), true);
   }
   
   public void update(){
-    generate();
+    if(settings.hasChanged() && settings.getBool("Auto update")) generate();
   }
   
   public void generate(){
-    float[][] baseMap = generateLandMass(noise.generate(settings.noiseWidth(), settings.noiseHeight(), 
+    Tile[][] baseMap = generateLandMass(noiseMap.generate(settings.noiseWidth(), settings.noiseHeight(), 
       settings.getFloat("Noise offset (x)"), settings.getFloat("Noise offset (y)"),
       settings.getFloat("Noise scale")));
-    map.set(baseMap, (int)(float)settings.getInt("Map width"), (int)(float)settings.getInt("Map height"));
+    
+    
+    
+    map.set(baseMap, settings.getInt("Map width"), settings.getInt("Map height"));
   }
   
-  private float[][] generateLandMass(float[][] noise){
-    float[][] land = new float[settings.noiseHeight()][settings.noiseWidth()];
+  private float[][] generateNoise(){
+    int noiseHeight = settings.noiseHeight();
+    int noiseWidth = settings.noiseWidth();
+    float[][] noise = noiseMap.generate(noiseWidth, noiseHeight, settings.getFloat("Noise offset (x)"),
+          settings.getFloat("Noise offset (y)"), settings.getFloat("Noise scale"));
     
-    for(int j=0; j<settings.noiseHeight(); ++j){
-      for(int i=0; i<settings.noiseWidth(); ++i){
-        float value = noise[j][i];
-        land[j][i] = value; //- settings.getFloat("See level");
+    int overSamp = settings.getInt("Over-sampling");
+    
+    for(int j=0; j<noiseHeight; ++j){
+      for(int i=0; i<noiseWidth; ++i){
+        
       }
     }
     
-    return land;
+    return noise;
+  }
+  
+  private Tile[][] generateLandMass(float[][] noise){
+    int mapHeight = settings.getInt("Map height");
+    int mapWidth = settings.getInt("Map width");
+    Tile[][] tiles = new Tile[mapHeight][mapWidth];
+    
+    float seeLevel = settings.getFloat("See level");
+    float mountainLevel = settings.getFloat("Mountains level");
+    mountainLevel = mountainLevel<seeLevel ? seeLevel : mountainLevel;
+    
+    for(int j=0; j<mapHeight; ++j){
+      for(int i=0; i<mapWidth; ++i){
+        float value = noise[j][i];
+        if(value < seeLevel){
+          value = map(value, 0, seeLevel, -10, 0);
+          tiles[j][i] = new Tile(Climate.WATER, value);
+        }else if(value < mountainLevel){
+          value = map(value, seeLevel, mountainLevel, 0, 10);
+          tiles[j][i] = new Tile(value);
+        }else{
+          value = map(value, mountainLevel, 1, 10, 20);
+          tiles[j][i] = new Tile(Climate.MOUNTAIN, value);
+        }
+      }
+    }
+    
+    return tiles;
   }
 }
 
