@@ -310,11 +310,11 @@ class CheckBox extends Control{
 class Slider extends Control{
   private static final int MARGIN = 10;
   
-  private Settings.NumberSetting vs;
+  private NumberSetting vs;
   private color lineColor, cursorColor;
   private boolean valueIsInteger;
  
-  private Slider(Rect rect, Settings.NumberSetting numberSetting){
+  private Slider(Rect rect, NumberSetting numberSetting){
     super(rect, numberSetting.getObsValue());
     vs = numberSetting;
     lineColor = color(20);
@@ -380,8 +380,8 @@ class Slider extends Control{
     else return (float)vs.getValue();
   }
   private Vector2<Float> getRange(){
-    if(valueIsInteger) return new Vector2<Float>((float)(int)vs.getRange().e1, (float)(int)vs.getRange().e2);
-    else return vs.getRange();
+    if(valueIsInteger) return new Vector2<Float>((float)(int)vs.getRange().min(), (float)(int)vs.getRange().max());
+    else return new Vector2<Float>((float)vs.getRange().min(), (float)vs.getRange().max());
   }
   private void setValue(float v){
     if(valueIsInteger) vs.getObsValue().set((int) v);
@@ -408,6 +408,10 @@ class MapContainer extends AbstractUI{
     xMouse = yMouse = 0;
   }
   
+  public void update(){
+    super.update();
+    updateZoom();
+  }
   public void draw(){
     super.draw();
     pushMatrix();
@@ -417,6 +421,11 @@ class MapContainer extends AbstractUI{
     map.draw(rect.w, rect.h, this.xOff, this.yOff, this.zoom);
     
     popMatrix();
+  }
+  
+  private void updateZoom(){
+    zoom -= mw/4;
+    if(zoom < 1) zoom = 1;
   }
   
   private void updateOffsets(){

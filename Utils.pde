@@ -79,148 +79,36 @@ abstract static class Step<E extends Number>{
   public abstract E step(E base, boolean ascend);
 }
 
-class Settings{
-  public abstract class ValueSetting<E>{
-    public abstract E getValue();
-    public abstract ObservableValue<E> getObsValue();
-    public abstract boolean hasChanged();
+public interface Range{
+  public Number min();
+  public Number max();
+}
+
+public class IntRange implements Range{
+  private Vector2<ObservableInt> values;
+  
+  public IntRange(ObservableInt v1, ObservableValue v2){
+    values = new Vector2(v1, v2);
   }
-  public abstract class NumberSetting<E extends Number> extends ValueSetting<E>{
-    public abstract Vector2<E> getRange();
-    public abstract Step<E> getStep();
+  public IntRange(int i1, int i2){
+    this(new ObservableInt(i1), new ObservableInt(i2));
   }
   
-  private class IntSetting extends NumberSetting<Integer>{
-    protected ObservableInt obsValue;
-    protected Vector2<Integer> range;
-    protected Step<Integer> step;
-    private int previous;
-    
-    public IntSetting(int i, Vector2<Integer> range, Step<Integer> step){
-      this.obsValue = new ObservableInt(i);
-      this.range = range;
-      this.step = step;
-    }
-    
-    public Integer getValue(){ return obsValue.get(); }
-    public ObservableInt getObsValue(){ return obsValue; }
-    public Vector2<Integer> getRange(){ return range; }
-    public Step<Integer> getStep(){ return step; }
-    public boolean hasChanged(){
-      boolean changed = previous != obsValue.get();
-      if(changed){
-        previous = obsValue.get();
-        return true;
-      }else return false;
-    }
+  public Integer min(){ return values.e1.get(); }
+  public Integer max(){ return values.e2.get(); }
+}
+public class FloatRange implements Range{
+  private Vector2<ObservableFloat> values;
+  
+  public FloatRange(ObservableFloat v1, ObservableFloat v2){
+    values = new Vector2(v1, v2);
   }
-  private class FloatSetting extends NumberSetting<Float>{
-    protected ObservableFloat obsValue;
-    protected Vector2<Float> range;
-    protected Step<Float> step;
-    private float previous;
-    
-    public FloatSetting(float f, Vector2<Float> range, Step<Float> step){
-      this.obsValue = new ObservableFloat(f);
-      this.range = range;
-      this.step = step;
-    }
-    
-    public Float getValue(){ return obsValue.get(); }
-    public ObservableFloat getObsValue(){ return obsValue; }
-    public Vector2<Float> getRange(){ return range; }
-    public Step<Float> getStep(){ return step; }
-    public boolean hasChanged(){
-      boolean changed = previous != obsValue.get();
-      if(changed){
-        previous = obsValue.get();
-        return true;
-      }else return false;
-    }
-  }
-  private class BoolSetting extends ValueSetting<Boolean>{
-    protected ObservableBool obsValue;
-    private boolean previous;
-    
-    public BoolSetting(boolean b){
-      obsValue = new ObservableBool(b);
-    }
-    
-    public boolean hasChanged(){
-      boolean changed = previous != obsValue.get();
-      if(changed){
-        previous = obsValue.get();
-        return true;
-      }else return false;
-    }
-    public Boolean getValue(){ return obsValue.get(); }
-    public ObservableBool getObsValue(){ return obsValue; }
+  public FloatRange(float f1, float f2){
+    this(new ObservableFloat(f1), new ObservableFloat(f2));
   }
   
-  private HashMap<String, IntSetting> intMap;
-  private HashMap<String, FloatSetting> floatMap;
-  private HashMap<String, BoolSetting> boolMap;
-  
-  public Settings(){
-    intMap = new HashMap<String, IntSetting>();
-    floatMap = new HashMap<String, FloatSetting>();
-    boolMap = new HashMap<String, BoolSetting>();
-  }
-  
-  public void addInt(String k, int i){ intMap.put(k, new IntSetting(i, null, null)); }
-  public void addInt(String k, int i, Vector2<Integer> range, Step<Integer> step){
-    intMap.put(k, new IntSetting(i, range, step));
-  }
-  public void addFloat(String k, float f){ floatMap.put(k, new FloatSetting(f, null, null)); }
-  public void addFloat(String k, float f, Vector2<Float> range, Step<Float> step){
-    floatMap.put(k, new FloatSetting(f, range, step));
-  }
-  public void addBool(String k, boolean b){ boolMap.put(k, new BoolSetting(b)); }
-  
-  public boolean hasRange(String k){ 
-    return intMap.containsKey(k) ? intMap.get(k).range != null : false || 
-      floatMap.containsKey(k) ? floatMap.get(k).range != null : false; 
-  }
-  public Vector2<Integer> getIntRange(String k){ return intMap.get(k).range; }
-  public Vector2<Float> getFloatRange(String k){ return floatMap.get(k).range; }
-  
-  public int getInt(String k){ return intMap.get(k) != null ? intMap.get(k).getValue() : 0; }
-  public IntSetting getIntSetting(String k){ return intMap.get(k); }
-  public String[] getIntKeys(){ return keySetToArray(intMap.keySet()); }
-  public float getFloat(String k){ return floatMap.get(k) != null ? floatMap.get(k).getValue() : 0f; }
-  public FloatSetting getFloatSetting(String k){ return floatMap.get(k); }
-  public String[] getFloatKeys(){ return keySetToArray(floatMap.keySet()); }
-  public boolean getBool(String k){ return boolMap.get(k) != null ? boolMap.get(k).getValue() : false; }
-  public ObservableBool getObsBool(String k){ return boolMap.get(k) != null ? boolMap.get(k).getObsValue() : null; }
-  public String[] getBoolKeys(){ return keySetToArray(boolMap.keySet()); }
-  
-  public boolean hasChanged(){
-    for(String s : getIntKeys()){
-      if(intMap.get(s).hasChanged()) return true;
-    }
-    for(String s : getFloatKeys()){
-      if(floatMap.get(s).hasChanged()) return true;
-    }
-    for(String s : getBoolKeys()){
-      if(boolMap.get(s).hasChanged()) return true;
-    }
-    
-    return false;
-  }
-  
-  public int count(){ return intMap.size() + floatMap.size() + boolMap.size(); }
-  
-  private String[] keySetToArray(Set<String> set){
-    String[] array = new String[set.size()];
-    
-    int i=0;
-    for(String s : set){
-      array[i] = s;
-      ++i;
-    }
-    
-    return array;
-  }
+  public Float min(){ return values.e1.get(); }
+  public Float max(){ return values.e2.get(); }
 }
 
 //mouse button status
