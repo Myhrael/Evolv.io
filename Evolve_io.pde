@@ -7,6 +7,7 @@ Scene activeScene;
 AbstractUI onFocus;
 
 mbs mStatus = mbs.UP;
+float mw = 0;//mouse wheel count
 
 void setup() {
   //noLoop();
@@ -40,10 +41,15 @@ void mousePressed(){
 void mouseReleased(){
   mStatus = mbs.RELEASED;
 }
+void mouseWheel(MouseEvent e){
+  mw = e.getCount();
+}
 
 void updateMouseBtnStatus(){
   if(mStatus == mbs.PRESSED) mStatus = mbs.DOWN;
   else if(mStatus == mbs.RELEASED) mStatus = mbs.UP;
+  
+  mw=0;
 }
 
 class MainScene extends Scene{
@@ -106,10 +112,14 @@ class EditorScene extends Scene{
     mapContainer.setStroke(1);
     mapContainer.enableBackground();
     
-    SettingsEditor settingsEditor = new SettingsEditor(new Rect(2*rect.w/3, rect.h/5, rect.w/3, 4*rect.h/5), mapSettings);
+    SettingsEditor settingsEditor = new SettingsEditor(new Rect(2*rect.w/3, rect.h/5, rect.w/3, 3*rect.h/5), mapSettings);
     settingsEditor.setBackground(color(120));
     settingsEditor.enableBackground();
     
-    this.addChilds(title, mapContainer, settingsEditor);
+    Canvas btns = new Canvas(new Rect(2*rect.w/3, 4*rect.h/5, rect.w/3, rect.h/3));
+    btns.addChild(new Button(new Rect(0, 0, btns.rect.w/2, btns.rect.h/4), "Gen. climate seeds", new Action(){ public void act(){ mapGenerator.putClimateSeeds(mapGenerator.tileBlobs, mapGenerator.map.tiles); }}));
+    btns.addChild(new Button(new Rect(btns.rect.w/2, 0, btns.rect.w/2, btns.rect.h/4), "Exp. climates", new Action(){ public void act(){ mapGenerator.generateClimates(mapGenerator.tileBlobs, mapGenerator.map.tiles); }}));
+    
+    this.addChilds(title, mapContainer, settingsEditor, btns);
   }
 }
