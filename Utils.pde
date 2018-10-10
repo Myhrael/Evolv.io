@@ -13,6 +13,14 @@ class ChangeSceneAction implements Action{
   
   public void act(){ activeScene = scene; }
 }
+class NewGameAction implements Action{
+  String mapName;
+  public NewGameAction(String mapName){
+    this.mapName = mapName;
+  }
+  
+  public void act(){ activeScene = new GameScene(new Map(parseJson(sketchPath()+"/data/map/"+mapName+".txt"))); }
+}
 
 class Rect{
   public float x, y, w, h;

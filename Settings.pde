@@ -10,6 +10,9 @@ class Settings{
   }
   
   public void addInt(String k, int i){ intMap.put(k, new IntSetting(i, null, null)); }
+  public void addInt(String k, int i, IntRange range){
+    intMap.put(k, new IntSetting(i, range, Step.arythmeticInt(1)));
+  }
   public void addInt(String k, int i, IntRange range, Step<Integer> step){
     intMap.put(k, new IntSetting(i, range, step));
   }

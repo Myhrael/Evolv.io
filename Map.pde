@@ -78,6 +78,13 @@ class Map{
   Tile[][] tiles;
   boolean hueOnly;
   
+  Map(JsonObject json){
+    JsonObject dim = (JsonObject) json.getValue("dim");
+    w = (int) dim.getValue("width").getValue();
+    h = (int) dim.getValue("height").getValue();
+    tiles = new Tile[h][w];
+    load((JsonObject) json.getValue("tiles"));
+  }
   Map(int w, int h){ this(w, h, false); }
   Map(int w, int h, boolean hueOnly){
     this.w = w; this.h = h;
@@ -137,6 +144,78 @@ class Map{
     tiles = newMap;
     this.w = w;
     this.h = h;
+  }
+  
+  public void load(JsonObject jsonTiles){
+    List<JsonValue> values = jsonTiles.getValue();
+    
+    for(int j=0; j<h; ++j){
+      for(int i=0; i<w; ++i){
+        JsonObject jsonTile = (JsonObject) values.get(j*w+i);
+        
+        String climateString = (String) jsonTile.getValue("climate").getValue();
+        float altitude = (float) jsonTile.getValue("altitude").getValue();
+        Climate climate;
+        if(climateString.equals("WATER")) climate = Climate.WATER;
+        else if(climateString.equals("MOUNTAIN")) climate = Climate.MOUNTAIN;
+        else if(climateString.equals("GRASSLAND")) climate = Climate.GRASSLAND;
+        else if(climateString.equals("FOREST")) climate = Climate.FOREST;
+        else climate = Climate.SWAMP;
+        
+        tiles[j][i] = new Tile(climate, altitude, i, j);
+      }
+    }
+  }
+  
+  public void save(){
+    String path = "/data/map/";
+    String name = "map";
+    String[] usedNamesArray = listFileNames(sketchPath()+path);
+    int index = 1;
+    
+    if(usedNamesArray != null){
+      List<String> usedNames = Arrays.asList(usedNamesArray);
+      while(usedNames.contains(name+index+".txt")) ++index;
+    }
+      
+    save(name+index, path);
+  }
+  public void save(String name, String path){
+    JsonObject infos = saveMapInfos();
+    JsonObject tiles = saveTiles();
+    saveStrings(path+name+".txt", new String[]{new JsonObject(name, infos, tiles).print()});
+  }
+  private String[] listFileNames(String dir) {
+    File file = new File(dir);
+    if (file.isDirectory()) {
+      String names[] = file.list();
+      return names;
+    } else {
+      // If it's not a directory
+      return null;
+    }
+  }
+  private JsonObject saveMapInfos(){
+    ArrayList<JsonValue> dim = new ArrayList();
+    dim.add(new JsonInt("width", w));
+    dim.add(new JsonInt("height", h));
+    JsonObject infos = new JsonObject("dim", dim);
+    
+    return infos;
+  }
+  private JsonObject saveTiles(){
+    ArrayList<JsonValue> jsonTiles = new ArrayList();
+    for(int j=0; j<h; ++j){
+      for(int i=0; i<w; ++i){
+        Tile tile = tiles[j][i];
+        ArrayList<JsonValue> attributes = new ArrayList();
+        attributes.add(new JsonString("climate", tile.climate.toString()));
+        attributes.add(new JsonFloat("altitude", tile.altitude));
+        
+        jsonTiles.add(new JsonObject("tile"+(j*w+i), attributes));
+      }
+    }
+    return new JsonObject("tiles", jsonTiles);
   }
 }
 

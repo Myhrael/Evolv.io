@@ -1,7 +1,7 @@
 class MapSettings extends Settings{
   MapSettings(){
-    this.addInt("Map width", 250, new IntRange(100, 500), Step.arythmeticInt(1));
-    this.addInt("Map height", 250, new IntRange(100, 500), Step.arythmeticInt(1));
+    this.addInt("Map width", 250, new IntRange(100, 500));
+    this.addInt("Map height", 250, new IntRange(100, 500));
     
     this.addFloat("Noise offset (x)", 10f, new FloatRange(0f, 20f), Step.arythmeticFloat(0.05));
     this.addFloat("Noise offset (y)", 10f, new FloatRange(0f, 20f), Step.arythmeticFloat(0.05));
@@ -16,10 +16,10 @@ class MapSettings extends Settings{
     this.setFloatRange("See level", new FloatRange(this.getFloatSetting("Min value").getObsValue(), 
                         this.getFloatSetting("Mountains level").getObsValue()), Step.arythmeticFloat(0.01));
     
-    this.addInt("Rivers treshold", 15, new IntRange(5, 35), Step.arythmeticInt(1));
+    this.addInt("Rivers treshold", 15, new IntRange(5, 35));
     this.addBool("Rivers enabled", false);
     
-    this.addInt("Climate amount", 20, new IntRange(10, 200), Step.arythmeticInt(1));
+    this.addInt("Climate amount", 20, new IntRange(10, 200));
     
     this.addBool("Auto update", true);
   }

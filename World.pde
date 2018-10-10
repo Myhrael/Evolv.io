@@ -1,3 +1,9 @@
+public class WorldSettings extends Settings{
+  public WorldSettings(){
+    this.addInt("Play speed", 1, new IntRange(1, 100), Step.arythmeticInt(3));
+  }
+}
+
 public class World{
   
   float cameraX, cameraY, cameraZoom;

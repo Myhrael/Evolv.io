@@ -15,10 +15,9 @@ void setup() {
   //size(800, 600);
   //colorMode(HSB,1.0);
   main = new MainScene();
-  game = new GameScene();
   editor = new EditorScene();
   
-  activeScene = editor;
+  activeScene = main;
 }
 
 void draw(){
@@ -71,7 +70,7 @@ class MainScene extends Scene{
     Canvas buttons = new Canvas(new Rect(rect.w/4, rect.h/4, rect.w/2, 5*rect.h/8));
     buttons.setRectMode(CENTER);
     
-    Button playBtn = new Button(new Rect(0, -1.5*buttonHeight, buttonWidth, buttonHeight), "Play", new ChangeSceneAction(game));
+    Button playBtn = new Button(new Rect(0, -1.5*buttonHeight, buttonWidth, buttonHeight), "Play", new NewGameAction("map1"));
     Button editorBtn = new Button(new Rect(0, 0, buttonWidth, buttonHeight), "Create World", new ChangeSceneAction(editor));
     Button quitBtn = new Button(new Rect(0, +1.5*buttonHeight, buttonWidth, buttonHeight), "Quit", new Action(){ public void act(){ exit(); } });
     
@@ -83,6 +82,28 @@ class MainScene extends Scene{
 
 class GameScene extends Scene{  
   World world;
+  Settings worldSettings;
+  
+  public GameScene(Map map){
+    world = new World(map);
+    worldSettings = new WorldSettings();
+  }
+  
+  public void update(){
+    if(!initialized) {
+      this.buildUI();
+      initialized = true;
+    }
+    world.update();
+    super.update();
+  }
+  
+  private void buildUI(){
+    MapContainer mapContainer = new MapContainer(new Rect(0, 0, rect.w, rect.h), world.map);
+    
+    
+    this.addChild(mapContainer);
+  }
 }
 
 class EditorScene extends Scene{
@@ -116,10 +137,11 @@ class EditorScene extends Scene{
     settingsEditor.setBackground(color(120));
     settingsEditor.enableBackground();
     
-    Canvas btns = new Canvas(new Rect(2*rect.w/3, 4*rect.h/5, rect.w/3, rect.h/3));
-    btns.addChild(new Button(new Rect(0, 0, btns.rect.w/2, btns.rect.h/4), "Gen. climate seeds", new Action(){ public void act(){ mapGenerator.putClimateSeeds(mapGenerator.tileBlobs, mapGenerator.map.tiles); }}));
-    btns.addChild(new Button(new Rect(btns.rect.w/2, 0, btns.rect.w/2, btns.rect.h/4), "Exp. climates", new Action(){ public void act(){ mapGenerator.generateClimates(mapGenerator.tileBlobs, mapGenerator.map.tiles); }}));
-    
+    Canvas btns = new Canvas(new Rect(2*rect.w/3, 4*rect.h/5, rect.w/3, rect.h/5));
+    btns.addChild(new Button(new Rect(0, 0, btns.rect.w/2, btns.rect.h/2), "Gen. climate seeds", new Action(){ public void act(){ mapGenerator.putClimateSeeds(mapGenerator.tileBlobs, mapGenerator.map.tiles); }}));
+    btns.addChild(new Button(new Rect(btns.rect.w/2, 0, btns.rect.w/2, btns.rect.h/2), "Exp. climates", new Action(){ public void act(){ mapGenerator.generateClimates(mapGenerator.tileBlobs, mapGenerator.map.tiles); }}));
+    btns.addChild(new Button(new Rect(0, btns.rect.h/2, btns.rect.w/2, btns.rect.h/2), "Save", new Action(){ public void act(){ mapGenerator.map.save(); }}));
+    btns.addChild(new Button(new Rect(btns.rect.w/2, btns.rect.h/2, btns.rect.w/2, btns.rect.h/2), "Quit", new ChangeSceneAction(main)));
     this.addChilds(title, mapContainer, settingsEditor, btns);
   }
 }
