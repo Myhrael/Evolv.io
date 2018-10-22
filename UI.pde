@@ -418,11 +418,14 @@ class MapContainer extends AbstractUI{
     translate(rect.x, rect.y);
     
     updateOffsets();
-    map.draw(rect.w, rect.h, this.xOff, this.yOff, this.zoom);
+    map.draw(int(tileSizeUnZoomed()*zoom), rect.w, rect.h, this.xOff, this.yOff);
     
     popMatrix();
   }
   
+  private float tileSizeUnZoomed(){
+    return min(rect.w/map.w, rect.h/map.h);
+  }
   private void updateZoom(){
     zoom -= mw/4;
     if(zoom < 1) zoom = 1;

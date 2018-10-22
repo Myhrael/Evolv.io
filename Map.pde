@@ -1,78 +1,3 @@
-class Tile{
-  private static final float STARTING_FOOD_RATIO = 1/4;
-  private static final int STARTING_FOOD_RANDOM = 10;
-  private static final int MIN_FOOD_GAIN_RANDOM = -2;
-  private static final float FOOD_LOSS_RATIO = 1/60;
-  
-  private Climate climate;
-  private float foodAmount;
-  private float altitude;
-  private int x, y;
-  
-  Tile(int x, int y){
-    this(0, x, y);
-  }
-  Tile(float altitude, int x, int y){
-    this(null, altitude, x, y);
-  }
-  Tile(Climate climate, float altitude, int x, int y){
-    this.climate = climate;
-    foodAmount = climate == null ? 0 : climate.maxFood * STARTING_FOOD_RATIO 
-      + random(-STARTING_FOOD_RANDOM, STARTING_FOOD_RANDOM);
-    this.altitude = altitude;
-    this.x = x; this.y = y;
-  }
-  
-  void update(float year){
-    updateFood(year);
-  }
-  
-  /*
-   * w: width in pixel of the tile
-   * h: height in pixel of the tile
-   * hueOnly: set color depending only on the hue (widht preset saturation && brightness)
-   */
-  void draw(int w, int h, boolean hueOnly){
-    noStroke();
-    
-    int hue = climate == null ? 1 : climate.hue;
-    int sat = climate == null ? 0 : hueOnly ? 100 : (int)map(foodAmount, 0, climate.maxFood, 0, 99);
-    int brt = (int) map(altitude, -10, 20, 20, 90);
-     
-    colorMode(HSB, 360, 100, 100);
-    fill(hue, sat, brt);
-    
-    rect(0, 0, w, h);
-  }
-  
-  public void setClimate(Climate c){
-    this.climate = c;
-    if(this.foodAmount == 0) this.foodAmount = c.maxFood * STARTING_FOOD_RATIO 
-      + random(-STARTING_FOOD_RANDOM, STARTING_FOOD_RANDOM);
-  }
-  
-  private void updateFood(float year){
-    if(climate.getTemperature(year) < climate.foodCriticalLowTemp){
-      decreaseFood(climate.foodCriticalLowTemp - climate.getTemperature(year));
-    }else if (climate.getTemperature(year) > climate.foodCriticalUpTemp){
-      decreaseFood(climate.getTemperature(year) - climate.foodCriticalUpTemp);
-    }else{
-      increaseFood(min(climate.getTemperature(year) - climate.foodCriticalLowTemp, 
-                        climate.foodCriticalUpTemp - climate.getTemperature(year)));
-    }
-  }
-  
-  private void decreaseFood(float tempLoss){
-    foodAmount -= FOOD_LOSS_RATIO*foodAmount*tempLoss;
-    if(foodAmount < 0) foodAmount = 0;
-  }
-  
-  private void increaseFood(float tempGain){
-    foodAmount += climate.foodGain + random(MIN_FOOD_GAIN_RANDOM, tempGain);
-    if(foodAmount > climate.maxFood) foodAmount = climate.maxFood;
-  }
-}
-
 class Map{
   int w, h;
   Tile[][] tiles;
@@ -104,8 +29,7 @@ class Map{
    * rotation: rotation
    * zoom: zoom of the map
    */
-  public void draw(float w, float h, float xOff, float yOff, float zoom){    
-    int tileSize = int(min(w/this.w, h/this.h) * zoom);
+  public void draw(int tileSize, float w, float h, float xOff, float yOff){
     int tileWidth, tileHeight;
     float usedWidth = 0, usedHeight = 0;
     
@@ -216,6 +140,81 @@ class Map{
       }
     }
     return new JsonObject("tiles", jsonTiles);
+  }
+}
+
+class Tile{
+  private static final float STARTING_FOOD_RATIO = 1/3.0;
+  private static final int STARTING_FOOD_RANDOM = 10;
+  private static final int MIN_FOOD_GAIN_RANDOM = -2;
+  private static final float FOOD_LOSS_RATIO = 0.0025;
+  
+  private Climate climate;
+  private float foodAmount;
+  private float altitude;
+  private int x, y;
+  
+  Tile(int x, int y){
+    this(0, x, y);
+  }
+  Tile(float altitude, int x, int y){
+    this(null, altitude, x, y);
+  }
+  Tile(Climate climate, float altitude, int x, int y){
+    this.climate = climate;
+    foodAmount = climate == null ? 0 : climate.maxFood * STARTING_FOOD_RATIO 
+      + random(-STARTING_FOOD_RANDOM, STARTING_FOOD_RANDOM);
+    this.altitude = altitude;
+    this.x = x; this.y = y;
+  }
+  
+  void update(float dt, float year){
+    updateFood(dt, year);
+  }
+  
+  /*
+   * w: width in pixel of the tile
+   * h: height in pixel of the tile
+   * hueOnly: set color depending only on the hue (widht preset saturation && brightness)
+   */
+  void draw(int w, int h, boolean hueOnly){
+    noStroke();
+    
+    int hue = climate == null ? 1 : climate.hue;
+    int sat = climate == null ? 0 : hueOnly ? 100 : (int)map(foodAmount, 0, climate.maxFood, 5, climate==Climate.MOUNTAIN ? 40 : 90);
+    int brt = (int) map(altitude, -10, 20, 20, 90);
+     
+    colorMode(HSB, 360, 100, 100);
+    fill(hue, sat, brt);
+    
+    rect(0, 0, w, h);
+  }
+  
+  public void setClimate(Climate c){
+    this.climate = c;
+    if(this.foodAmount == 0) this.foodAmount = c.maxFood * STARTING_FOOD_RATIO 
+      + random(-STARTING_FOOD_RANDOM, STARTING_FOOD_RANDOM);
+  }
+  
+  private void updateFood(float dt, float year){
+    if(climate.getTemperature(year) < climate.foodCriticalLowTemp){
+      decreaseFood(dt, climate.foodCriticalLowTemp - climate.getTemperature(year));
+    }else if (climate.getTemperature(year) > climate.foodCriticalUpTemp){
+      decreaseFood(dt, climate.getTemperature(year) - climate.foodCriticalUpTemp);
+    }else{
+      increaseFood(dt, min(climate.getTemperature(year) - climate.foodCriticalLowTemp, 
+                        climate.foodCriticalUpTemp - climate.getTemperature(year)));
+    }
+  }
+  
+  private void decreaseFood(float dt, float tempLoss){
+    foodAmount -= FOOD_LOSS_RATIO*foodAmount*tempLoss*dt;
+    if(foodAmount < 0) foodAmount = 0;
+  }
+  
+  private void increaseFood(float dt, float tempGain){
+    foodAmount += (climate.foodGain + random(MIN_FOOD_GAIN_RANDOM, tempGain))*dt;
+    if(foodAmount > climate.maxFood) foodAmount = climate.maxFood;
   }
 }
 
