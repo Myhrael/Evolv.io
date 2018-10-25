@@ -8,9 +8,7 @@ class Creature{
   }
   
   public void update(float dt){
-    updateStatus();
-    float expected = expectedResult(brain.getPrediction(), chooseAction().execute());
-    brain.train(expected);
+    brain.use();
   }
   private void updateStatus(){
     
@@ -40,7 +38,7 @@ abstract class BodyPart{
   
   public BodyPart(float size, List<Organ> organs){
     this.size = new Status("Body size", size/MAX_SIZE);
-    this.energy = new Status("Body energy", size*MAX_ENERGY_PER_UNIT/2);
+    this.energy = new Status("Body energy", 0.9f);
     this.organs = organs;
   }
   
@@ -62,7 +60,7 @@ abstract class BodyPart{
   public void drainEnergy(float amount){
     energy.decrease(amount);
   }
-  private float maxEnergy(){ return MAX_ENERGY_PER_UNIT * PI*pow(size/2, 2); }
+  private float maxEnergy(){ return MAX_ENERGY_PER_UNIT * PI*pow(size.getValue()/2, 2); }
 }
 
 abstract class Organ{
@@ -83,4 +81,18 @@ abstract class Organ{
   
   public List<Status> getStatus(){ return status; }
   public List<Action> getActions(){ return actions; }
+}
+
+class Brain extends Organ{
+  private AI ai;  
+  
+  public Brain(BodyPart body, List<Rule> rules, int memory){
+    super(body);
+    ai = new AI(body.getStatus(), body.getActions(), rules, memory);
+  }
+  
+  public float _use(){
+    int iterations = ai.act();
+    return iterations*ai.size()*0.001f;
+  }
 }

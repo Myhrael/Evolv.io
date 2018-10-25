@@ -1,14 +1,14 @@
 class AI{
-  private int size;
-  private SAE_NN sae;
-  private State state;
-  private List<Action> actions;
-  private List<Rule> rules;
-  private List<SAQCorrespondance> pastActions;
+  private final int size;
+  private final SAE_NN sae;
+  private final State state;
+  private final List<Action> actions;
+  private final List<Rule> rules;
+  private final CapedList<SAQCorrespondance> pastActions;
   
   private int iterations; //nbr of times the network propagate (forward or backward)
   
-  public AI(List<Status> status, List<Action> actions, List<Rule> rules){
+  public AI(List<Status> status, List<Action> actions, List<Rule> rules, int memory){
     size = status.size() + actions.size();
     sae = new SAE_NN(size, 2);
     
@@ -16,7 +16,7 @@ class AI{
     this.actions = actions;
     this.rules = rules;
     Collections.sort(rules);
-    pastActions = new ArrayList();
+    pastActions = new CapedList(memory);
   }
   
   public int act(){
@@ -26,7 +26,7 @@ class AI{
     Action action = pair.p1;
     float estimate = pair.p2;
     
-    pastActions.add(new SAQCorrespondance(state.clone(), action, estimate));
+    pastActions.push(new SAQCorrespondance(state.clone(), action, estimate));
     float reward = getReward(state, action);
     if(reward != 0){
       correctActions(reward);

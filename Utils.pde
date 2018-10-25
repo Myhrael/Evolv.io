@@ -1,5 +1,27 @@
 import java.util.*;
 
+class CapedList<T>{
+  int size;
+  LinkedList<T> list;
+  
+  public CapedList(int size){
+    this.size = size;
+    list = new LinkedList<T>();
+  }
+  public CapedList(int size, Collection<? extends T> col){
+    this.size = size;
+    list = new LinkedList<T>();
+    for(T e : col) push(e);
+  }
+  
+  public void push(T e){
+    list.push(e);
+    if(list.size() > size) list.removeLast();
+  }
+  public T get(int index){ return list.get(index); }
+  public int size(){ return list.size(); }
+}
+
 class Pair<U, V>{
   public U p1;
   public V p2;
