@@ -219,11 +219,11 @@ class Button extends TextBasedUI{
   final color BASE_UNPRESS_COLOR = color(220);
   final color BASE_PRESS_COLOR = color(245);
   
-  private Action action;
+  private UIAction action;
   private color pressedBg;
   private color unpressedBg;
   
-  public Button(Rect rect, String text, Action action){
+  public Button(Rect rect, String text, UIAction action){
     super(rect, text);
     this.action = action;
     unpressedBg = BASE_UNPRESS_COLOR;
@@ -488,4 +488,27 @@ class SettingsEditor extends AbstractContainer{
       ++el;
     }
   }
+}
+
+
+interface UIAction{
+  public void act();
+}
+
+class ChangeSceneAction implements UIAction{
+  private Scene scene;
+  
+  public ChangeSceneAction(Scene scene){
+    this.scene = scene;
+  }
+  
+  public void act(){ activeScene = scene; }
+}
+class NewGameAction implements UIAction{
+  String mapName;
+  public NewGameAction(String mapName){
+    this.mapName = mapName;
+  }
+  
+  public void act(){ activeScene = new GameScene(new Map(parseJson(sketchPath()+"/data/map/"+mapName+".txt"))); }
 }

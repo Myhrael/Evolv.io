@@ -82,14 +82,15 @@ class FullyConnectedNetwork extends NeuralNetwork{
   }
 }
 
-static int[] decreasingLayers(int inputs, int outputs, int layerN){
-  int[] layers = new int[layerN];
-  int r = (inputs-outputs)/layerN;
+static int[] decreasingLayers(int nInputs, int nOutputs, int nHiddenLayer){
+  int nLayer = nHiddenLayer + 2;
+  int[] layers = new int[nLayer];
+  float r = (nInputs-nOutputs)/(float)nLayer;
   
-  int n = inputs;
-  for(int i=0; i<layerN; ++i){
-    if(i >= layerN-1) layers[i] = outputs;
-    else layers[i] = n;
+  float n = nInputs;
+  for(int i=0; i<nLayer; ++i){
+    if(i == nLayer-1) layers[i] = nOutputs;
+    else layers[i] = ceil(n);
     n -= r;
   }
   

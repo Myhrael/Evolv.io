@@ -1,58 +1,50 @@
 public class WorldSettings extends Settings{
   public WorldSettings(){
-    this.addInt("Play speed", 1, new IntRange(1, 100), Step.arythmeticInt(3));
+    this.addInt("Play speed", 16, new IntRange(1, 16), Step.geometricInt(2));
   }
+  
+  public int playSpeed(){ return getInt("Play speed"); }
 }
 
-public class World{
+public class World{  
+  private final float timeStep = 0.5;//how many days pass in 1sec in normal speed
+  private float year = 0;
+  private WorldSettings settings;
   
-  float cameraX, cameraY, cameraZoom;
-  boolean draggedFar = false;
+  private ArrayList<Creature> creatures;
+  private Map map;
   
-  float timeStep = 0.002;
-  int playSpeed = 1;
-  float year = 0;
-  
-  ArrayList<Creature> creatures;
-  Map map;
-  
-  World(Map map){
-    resetZoom();
-    
+  World(Map map, WorldSettings settings){
     this.map = map;
-    generateTiles();
+    this.settings = settings;
   }
   
-  void update(int playSpeed, float timeStep){
-    //Input
-    if (dist(pmouseX, pmouseY, mouseX, mouseY) > 5) {
-      draggedFar = true;
+  // dt: the elapsed time in sec
+  void update(float dt){
+    float time = timeStep*dt;
+    int playSpeed = settings.playSpeed();
+    
+    for (int i=0; i<playSpeed; ++i) {
+      year += (double)time/365;
+      iterate(timeStep*dt);
     }
-    
-    //Update
-    for (int iteration = 0; iteration < playSpeed; iteration++) {
-      iterate(timeStep);
+  }
+  
+  /*
+   * time: delta time expressed in days
+   */
+  void iterate(float time){
+    for(int j=0; j<map.h; ++j){
+      for(int i=0; i<map.w; ++i){
+        map.tiles[j][i].update(time, year);
+      }
     }
-  }
-  
-  void generateTiles(){
-    
-  }
-  
-  void iterate(float timeStep){
-    
-  }
-  
-  void resetZoom(){/*
-    cameraX = rect.w*0.5;
-    cameraY = rect.h*0.5;
-    cameraZoom = 1;*/
   }
 }
 
 enum Climate{FOREST(    135, 150, 4,  5, 30, -10, 25, 2.0, 2.5,  0.1),
              GRASSLAND(  70, 120, 3,  0, 30, -10, 35, 1.0, 0.5,  0.05),
-             MOUNTAIN(   30, 75,  2, -5, 25, -25, 15, 4.0, 1.25, 0.25),
+             MOUNTAIN(   45, 75,  2, -5, 25, -25, 15, 4.0, 1.25, 0.25),
              SWAMP(     170, 100, 5,  5, 35,  -5, 20, 1.5, 1.0,  0.1),
              WATER(     240, 120, 3,  2, 30,   0, 20, 1.0, 0.5,  0.05);
   

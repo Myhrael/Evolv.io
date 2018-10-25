@@ -1,25 +1,21 @@
 import java.util.*;
 
-interface Action{
-  public void act();
-}
-
-class ChangeSceneAction implements Action{
-  private Scene scene;
+class Pair<U, V>{
+  public U p1;
+  public V p2;
   
-  public ChangeSceneAction(Scene scene){
-    this.scene = scene;
+  public Pair(U p1, V p2){
+    this.p1 = p1;
+    this.p2 = p2;
+  }
+}
+class NameValuePair<V> extends Pair<String, V>{
+  public NameValuePair(String name, V value){
+    super(name, value);
   }
   
-  public void act(){ activeScene = scene; }
-}
-class NewGameAction implements Action{
-  String mapName;
-  public NewGameAction(String mapName){
-    this.mapName = mapName;
-  }
-  
-  public void act(){ activeScene = new GameScene(new Map(parseJson(sketchPath()+"/data/map/"+mapName+".txt"))); }
+  public String getName(){ return p1; }
+  public V getValue(){ return p2; }
 }
 
 class Rect{
@@ -79,6 +75,11 @@ abstract static class Step<E extends Number>{
       return ascend ? (int)base + r : (int)base - r;
     }};
   }
+  public static Step<Integer> geometricInt(final int p){ return new Step(){
+    public Integer step(Number base, boolean ascend){
+      return ascend ? (int)base*p : (int)base/p;
+    }};
+  }
   public static Step<Float> arythmeticFloat(final float r){ return new Step(){
     public Float step(Number base, boolean ascend){
       return ascend ? (float)base + r : (float)base - r;
@@ -87,12 +88,14 @@ abstract static class Step<E extends Number>{
   public abstract E step(E base, boolean ascend);
 }
 
-public interface Range{
-  public Number min();
-  public Number max();
+public interface Range<N extends Number>{
+  public N min();
+  public N max();
+  
+  public boolean contains(N n);
 }
 
-public class IntRange implements Range{
+public class IntRange implements Range<Integer>{
   private Vector2<ObservableInt> values;
   
   public IntRange(ObservableInt v1, ObservableValue v2){
@@ -104,8 +107,11 @@ public class IntRange implements Range{
   
   public Integer min(){ return values.e1.get(); }
   public Integer max(){ return values.e2.get(); }
+  public boolean contains(Integer i){
+    return i>=min() && i<=max();
+  }
 }
-public class FloatRange implements Range{
+public class FloatRange implements Range<Float>{
   private Vector2<ObservableFloat> values;
   
   public FloatRange(ObservableFloat v1, ObservableFloat v2){
@@ -117,6 +123,9 @@ public class FloatRange implements Range{
   
   public Float min(){ return values.e1.get(); }
   public Float max(){ return values.e2.get(); }
+  public boolean contains(Float f){
+    return f>=min() && f<=max();
+  }
 }
 
 //mouse button status
